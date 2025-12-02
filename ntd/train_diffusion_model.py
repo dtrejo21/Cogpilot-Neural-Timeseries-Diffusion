@@ -12,6 +12,9 @@ from omegaconf import OmegaConf as OC
 from torch import optim
 from torch.optim.lr_scheduler import MultiStepLR
 from torch.utils.data import DataLoader, Subset, random_split
+import torch.profiler as profiler
+
+from CogPilot.dataset import CogPilotDataset
 
 from ntd.ajile_imputation_experiment import (
     conditional_ajile_imputation_experiment,
@@ -227,6 +230,24 @@ def init_dataset(cfg):
         )
         test_data_set = Subset(test_data_set, list(range(len(test_data_set))))
         created_train_test_split = True
+        
+    elif cfg.dataset.self == "cogpilot":
+        train_data_set = CogPilotDataset(
+            index_json=cfg.dataset.index_json,
+            signal_length=cfg.dataset.signal_length,
+            target_fs=cfg.dataset.target_fs,
+            split='train'
+        )
+        
+        test_data_set = CogPilotDataset(
+            index_json=cfg.dataset.index_json,
+            signal_length=cfg.dataset.signal_length,
+            target_fs=cfg.dataset.target_fs,
+            split='test'
+        )
+        created_train_test_split = True
+        
+    
     else:
         raise NotImplementedError
 
@@ -536,7 +557,7 @@ def training_and_eval_pipeline(cfg):
 
     if cfg.base.use_cuda_if_available and torch.cuda.is_available():
         device = torch.device("cuda")
-        environ_kwargs = {"num_workers": 0, "pin_memory": True}
+        environ_kwargs = {"num_workers": 4, "pin_memory": True}
         log.info("Using CUDA")
     else:
         device = torch.device("cpu")
@@ -544,6 +565,13 @@ def training_and_eval_pipeline(cfg):
         log.info("Using CPU")
 
     train_data_set, test_data_set = init_dataset(cfg)
+    
+    if "debug" in str(cfg.base.experiment):
+        log.info("!!! DEBUG MODE DETECTED: TRUNCATING DATASET !!!")
+        # Use only 10,000 samples for training and 2,000 for testing
+        train_data_set = torch.utils.data.Subset(train_data_set, range(10000))
+        test_data_set = torch.utils.data.Subset(test_data_set, range(2000))
+        log.info(f"New dataset sizes -> Train: {len(train_data_set)}, Test: {len(test_data_set)}")
 
     train_loader = DataLoader(
         train_data_set,
@@ -581,7 +609,6 @@ def training_and_eval_pipeline(cfg):
         milestones=cfg.optimizer.scheduler_milestones,
         gamma=cfg.optimizer.scheduler_gamma,
     )
-
     for i in range(cfg.optimizer.num_epochs):
         batchwise_losses = trainer.train_epoch()
 

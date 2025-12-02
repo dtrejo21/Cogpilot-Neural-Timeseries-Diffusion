@@ -1,0 +1,5 @@
+self: cogpilot
+index_json: "data/processed/dataset_index.json"
+signal_length: 512
+target_fs: 128.0
+split: "train"

@@ -164,3 +164,8 @@ cython_debug/
 .vscode
 outputs
 wandb
+node_modules
+test_data
+dataPackage
+generated_data_root
+pilotAnalysis.ipynb

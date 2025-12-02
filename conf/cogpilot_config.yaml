@@ -1,0 +1,40 @@
+# CogPilot Configuration
+
+# Dataset
+dataset:
+  name: CogPilotDataset
+  index_json: data/processed/dataset_index.json
+  signal_length: 512
+  target_fs: 128.0
+  base: wandb_default
+  
+
+"""
+# Model
+model:
+  in_channels: 14
+  out_channels: 14
+  cond_dim: 1
+  hidden_channels: [64, 128, 256, 512]
+  kernel_size: 3
+  num_layers: 8
+  dropout: 0.1
+
+# Diffusion
+diffusion:
+  num_timesteps: 1000
+  beta_schedule: linear
+  kernel_type: ou
+  kernel_length_scale: 0.1
+
+# Training
+training:
+  batch_size: 32
+  num_epochs: 200
+  num_workers: 8
+  lr: 0.0001
+  val_interval: 5
+  save_interval: 10
+
+# Seed
+seed: 42"""
